@@ -10,7 +10,7 @@ Installation
 
 To install the latest development version with ``pip``::
 
-    pip install git+https://github.com/astrofrog/batchpr.git@master
+    pip install git+https://github.com/astrofrog/batchpr.git@main
 
 To install from source::
 
