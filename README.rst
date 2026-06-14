@@ -37,7 +37,7 @@ the ``Updater`` class, and define the following methods and properties:
 
     class MyUpdater(Updater):
 
-        def process_repo(self):
+        def process_repo(self) -> bool:
             # This method should contain any code that you want to run inside
             # the repository to make the changes/updates. You can assume that
             # the current working directory is the repository being processed.
@@ -46,19 +46,19 @@ the ``Updater`` class, and define the following methods and properties:
             # to git add any files that have changed, but should not commit.
 
         @property
-        def commit_message(self):
+        def commit_message(self) -> str:
             # The commit message to use when making the changes
 
         @property
-        def pull_request_title(self):
+        def pull_request_title(self) -> str:
             # The title of the pull request
 
         @property
-        def pull_request_body(self)
+        def pull_request_body(self) -> str:
             # The main body/description of the pull request
 
         @property
-        def branch_name(self):
+        def branch_name(self) -> str:
             # The name of the branch to use
 
 Once you have defined your updater class, you can run it with:
@@ -68,8 +68,10 @@ Once you have defined your updater class, you can run it with:
     helper = MyUpdater(token=GITHUB_TOKEN)
     helper.run('username/repo')
 
-Where GITHUB_TOKEN is a personal access token for GitHub. If you want to
-customize the author of the commit, you can do this with:
+Where GITHUB_TOKEN is a personal access token for GitHub with sufficent permissions
+(visit https://github.com/settings/tokens/new to create a token. ``public_repo`` is
+a sufficient scope if you don't need to update private repositories).
+If you want to customize the author of the commit, you can do this with:
 
 .. code:: python
 
@@ -121,8 +123,7 @@ zen of Python to the README file if present:
 
     class ExampleUpdater(Updater):
 
-        def process_repo(self):
-
+        def process_repo(self) -> bool:
             if os.path.exists('README.md'):
                 with open('README.md', 'a') as f:
                     f.write(os.linesep + ADDITION)
@@ -132,19 +133,19 @@ zen of Python to the README file if present:
                 return False
 
         @property
-        def commit_message(self):
+        def commit_message(self) -> str:
             return "MNT: Add important text to README.rst"
 
         @property
-        def branch_name(self):
+        def branch_name(self) -> str:
             return 'readme-zen'
 
         @property
-        def pull_request_title(self):
+        def pull_request_title(self) -> str:
             return self.commit_message
 
         @property
-        def pull_request_body(self):
+        def pull_request_body(self) -> str:
             return DESCRIPTION.strip()
 
     helper = ExampleUpdater(token=GITHUB_TOKEN)
