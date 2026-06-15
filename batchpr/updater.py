@@ -67,7 +67,7 @@ class Updater(metaclass=abc.ABCMeta):
         self.dry_run = dry_run
         self.verbose = verbose
 
-    def run(self, repositories, delay=2):
+    def run(self, repositories, delay=2, fork_delay=30):
         """Open pull request, one for each of the given repositories.
 
         Parameters
@@ -80,6 +80,10 @@ class Updater(metaclass=abc.ABCMeta):
         delay : int, optional
             Delay (in seconds) between processing each repository.
             This is ignored if only one repository is given.
+
+        fork_delay : int, optional
+            Delay (in seconds) between creating/checking fork and
+            cloning it for further processing to avoid GitHub exception.
 
         """
         if isinstance(repositories, str):
@@ -106,6 +110,7 @@ class Updater(metaclass=abc.ABCMeta):
             try:
                 print('  > Ensuring fork exists (and creating if not)')
                 self.ensure_fork_set_up()
+                time.sleep(fork_delay)
             except Exception:
                 self.error("    An error occurred when trying to set up a fork")
                 continue
