@@ -13,11 +13,12 @@ import requests
 from github import Github
 from termcolor import colored
 
-__all__ = ['BranchExistsException', 'Updater', 'IssueUpdater']
+__all__ = ["BranchExistsException", "Updater", "IssueUpdater"]
 
 
 class BranchExistsException(Exception):
     """Exception for when GitHub branch already exists."""
+
     pass
 
 
@@ -55,10 +56,18 @@ class Updater(metaclass=abc.ABCMeta):
         ``author_email`` must be provided with ``author_name``.
 
     """
-    def __init__(self, token, author_name=None, author_email=None,
-                 dry_run=False, verbose=False, draft=False):
+
+    def __init__(
+        self,
+        token,
+        author_name=None,
+        author_email=None,
+        dry_run=False,
+        verbose=False,
+        draft=False,
+    ):
         if author_name is not None and author_email is None:
-            raise ValueError('author_email must be provided with author_name')
+            raise ValueError("author_email must be provided with author_name")
 
         self.github = Github(token)
         self.token = token
@@ -93,26 +102,25 @@ class Updater(metaclass=abc.ABCMeta):
         if isinstance(repositories, str):
             repositories = [repositories]
 
-        start_dir = os.path.abspath('.')
+        start_dir = os.path.abspath(".")
 
         for ir, repository in enumerate(repositories):
-
             if ir > 0:
                 time.sleep(delay)
 
-            print(colored(f'Processing repository: {repository}', 'cyan'))
+            print(colored(f"Processing repository: {repository}", "cyan"))
 
             self.repo_name = repository
 
             try:
-                print('  > Ensuring repository exists')
+                print("  > Ensuring repository exists")
                 self.ensure_repo_set_up()
             except Exception:
                 self.error("    An error occurred when trying to get the repository")
                 continue
 
             try:
-                print('  > Ensuring fork exists (and creating if not)')
+                print("  > Ensuring fork exists (and creating if not)")
                 self.ensure_fork_set_up()
                 time.sleep(fork_delay)
             except Exception:
@@ -121,7 +129,7 @@ class Updater(metaclass=abc.ABCMeta):
 
             # Go to temporary directory
             directory = tempfile.mkdtemp()
-            print(f'  > Working in {directory}')
+            print(f"  > Working in {directory}")
 
             try:
                 os.chdir(directory)
@@ -129,12 +137,15 @@ class Updater(metaclass=abc.ABCMeta):
                 try:
                     self.clone_fork()
                 except BranchExistsException:
-                    self.error(f"    Branch {self.branch_name} already exists"
-                               " - skipping repository")
+                    self.error(
+                        f"    Branch {self.branch_name} already exists"
+                        " - skipping repository"
+                    )
                     continue
                 except Exception:
-                    self.error("    An error occurred when cloning fork - "
-                               "skipping repository")
+                    self.error(
+                        "    An error occurred when cloning fork - skipping repository"
+                    )
                     continue
 
                 if not self.process_repo():
@@ -146,24 +157,26 @@ class Updater(metaclass=abc.ABCMeta):
                 if not self.dry_run:
                     try:
                         url = self.open_pull_request()
-                        print(colored(f'    Pull request opened: {url}', 'green'))
+                        print(colored(f"    Pull request opened: {url}", "green"))
                     except Exception:
-                        self.error("    An error occurred when opening "
-                                   "pull request - skipping repository")
+                        self.error(
+                            "    An error occurred when opening "
+                            "pull request - skipping repository"
+                        )
                         continue
                 else:
-                    print('  > Successful dry run (no pull request opened)')
+                    print("  > Successful dry run (no pull request opened)")
 
             finally:
                 os.chdir(start_dir)
 
     def add(self, filename):
         """Add the given file to ``git`` staging area."""
-        self.run_command(f'git add {filename}')
+        self.run_command(f"git add {filename}")
 
     def remove(self, filename):
         """Remove the given file from version control."""
-        self.run_command(f'git rm {filename}')
+        self.run_command(f"git rm {filename}")
 
     def copy(self, filename1, filename2):
         """Copy ``filename1`` to ``filename2``."""
@@ -171,11 +184,11 @@ class Updater(metaclass=abc.ABCMeta):
 
     def warn(self, message):
         """Print the given warning message to terminal."""
-        print(colored(message, 'magenta'))
+        print(colored(message, "magenta"))
 
     def error(self, message):
         """Print the given error message to terminal."""
-        print(colored(message, 'red'))
+        print(colored(message, "red"))
 
     def check_file_exists(self, filename):
         """Check if a given file exists in the active repository.
@@ -191,8 +204,10 @@ class Updater(metaclass=abc.ABCMeta):
             `True` if it exists in ``self.repo_name``, else `False`.
 
         """
-        GITHUB_RAW_FILENAME = ('https://raw.githubusercontent.com/'
-                               f'{self.repo_name}/{self.repo.default_branch}/{filename}')
+        GITHUB_RAW_FILENAME = (
+            "https://raw.githubusercontent.com/"
+            f"{self.repo_name}/{self.repo.default_branch}/{filename}"
+        )
         r = requests.get(GITHUB_RAW_FILENAME)
         return r.status_code == 200
 
@@ -216,7 +231,7 @@ class Updater(metaclass=abc.ABCMeta):
         else:
             self.fork = self.repo
 
-    def clone_fork(self, dirname='.'):
+    def clone_fork(self, dirname="."):
         """Clone ``self.fork`` in the given directory.
         Then, create a new branch (``self.branch_name``) in that clone.
 
@@ -238,25 +253,31 @@ class Updater(metaclass=abc.ABCMeta):
         os.chdir(dirname)
 
         # Clone the repository
-        self.run_command(f'git clone --depth 1 {self.fork.html_url}')
+        self.run_command(f"git clone --depth 1 {self.fork.html_url}")
         os.chdir(self.repo.name)
 
         # Update to the latest upstream's default branch (usually "main")
-        self.run_command(f'git remote add upstream {self.repo.html_url}')
-        self.run_command(f'git fetch upstream {self.repo.default_branch}')
+        self.run_command(f"git remote add upstream {self.repo.html_url}")
+        self.run_command(f"git fetch upstream {self.repo.default_branch}")
 
         # If the branch already exists on the fork, check it out so that an
         # existing pull request can be updated, otherwise create it fresh from
         # the upstream default branch.
-        if self.run_command(f'git ls-remote --heads {self.fork.html_url} {self.branch_name}'):
-            self.run_command(f'git fetch origin {self.branch_name}')
-            self.run_command(f'git checkout -b {self.branch_name} origin/{self.branch_name}')
+        if self.run_command(
+            f"git ls-remote --heads {self.fork.html_url} {self.branch_name}"
+        ):
+            self.run_command(f"git fetch origin {self.branch_name}")
+            self.run_command(
+                f"git checkout -b {self.branch_name} origin/{self.branch_name}"
+            )
         else:
-            self.run_command(f'git checkout -b {self.branch_name} upstream/{self.repo.default_branch}')
+            self.run_command(
+                f"git checkout -b {self.branch_name} upstream/{self.repo.default_branch}"
+            )
 
         # Initialize submodules (this is a no-op if there is no submodule)
-        self.run_command('git submodule init')
-        self.run_command('git submodule update')
+        self.run_command("git submodule init")
+        self.run_command("git submodule update")
 
     def commit_changes(self):
         """Commit repo changes in ``git`` staging area.
@@ -268,9 +289,11 @@ class Updater(metaclass=abc.ABCMeta):
 
         """
         if self.author_name and self.author_email:
-            self.run_command(f'git -c "user.name={self.author_name}" '
-                             f'    -c "user.email={self.author_email}" '
-                             f'    commit -m "{self.commit_message}"')
+            self.run_command(
+                f'git -c "user.name={self.author_name}" '
+                f'    -c "user.email={self.author_email}" '
+                f'    commit -m "{self.commit_message}"'
+            )
         else:
             self.run_command(f'git commit -m "{self.commit_message}"')
 
@@ -288,13 +311,17 @@ class Updater(metaclass=abc.ABCMeta):
             ``git`` or GitHub command failed.
 
         """
-        self.run_command(f'git push https://{self.user.login}:{self.token}@github.com/'
-                         f'{self.fork.full_name} {self.branch_name}')
-        result = self.repo.create_pull(title=self.pull_request_title,
-                                       body=self.pull_request_body,
-                                       base=self.repo.default_branch,
-                                       head=f'{self.fork.owner.login}:{self.branch_name}',
-                                       draft=self.draft)
+        self.run_command(
+            f"git push https://{self.user.login}:{self.token}@github.com/"
+            f"{self.fork.full_name} {self.branch_name}"
+        )
+        result = self.repo.create_pull(
+            title=self.pull_request_title,
+            body=self.pull_request_body,
+            base=self.repo.default_branch,
+            head=f"{self.fork.owner.login}:{self.branch_name}",
+            draft=self.draft,
+        )
         return result.html_url
 
     def run_command(self, command):
@@ -317,13 +344,13 @@ class Updater(metaclass=abc.ABCMeta):
 
         """
         print(f"  > {command}")
-        p = subprocess.Popen(shlex.split(command),
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        p = subprocess.Popen(
+            shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
         p.wait()
-        output = p.communicate()[0].decode('utf-8').strip()
+        output = p.communicate()[0].decode("utf-8").strip()
         if (self.verbose or p.returncode != 0) and output:
-            print(indent(output, ' ' * 4))
+            print(indent(output, " " * 4))
         if p.returncode == 0:
             return output
         else:
@@ -421,6 +448,7 @@ class IssueUpdater(Updater):
         Docstring-style with GitHub markdown and emoji syntax is acceptable.
 
     """
+
     # NOTE: kwargs currently not used but kept for possible future expansion.
     def __init__(self, token, issue_title, issue_body, **kwargs):
         super(IssueUpdater, self).__init__(token, **kwargs)
@@ -446,16 +474,15 @@ class IssueUpdater(Updater):
             repositories = [repositories]
 
         for ir, repository in enumerate(repositories):
-
             if ir > 0:
                 time.sleep(delay)
 
-            print(colored(f'Processing repository: {repository}', 'cyan'))
+            print(colored(f"Processing repository: {repository}", "cyan"))
 
             self.repo_name = repository
 
             try:
-                print('  > Ensuring repository exists')
+                print("  > Ensuring repository exists")
                 self.ensure_repo_set_up()
             except Exception:
                 self.error("    An error occurred when trying to get the repository")
@@ -463,10 +490,11 @@ class IssueUpdater(Updater):
 
             try:
                 url = self.process_repo()
-                print(colored(f'    Issue opened: {url}', 'green'))
+                print(colored(f"    Issue opened: {url}", "green"))
             except Exception:
-                self.error("    An error occurred when opening issue - "
-                           "skipping repository")
+                self.error(
+                    "    An error occurred when opening issue - skipping repository"
+                )
                 continue
 
     def process_repo(self):
@@ -479,8 +507,7 @@ class IssueUpdater(Updater):
             URL of the issue created.
 
         """
-        result = self.repo.create_issue(
-            title=self.issue_title, body=self.issue_body)
+        result = self.repo.create_issue(title=self.issue_title, body=self.issue_body)
         return result.html_url
 
     # The rest of the methods are no-op because they have to be defined
