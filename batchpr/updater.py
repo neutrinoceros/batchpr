@@ -46,6 +46,9 @@ class Updater(metaclass=abc.ABCMeta):
         Print command output to screen.
         If `False`, it will only be printed on failure.
 
+    draft : bool
+        If `True`, the pull request is opened as a draft.
+
     Raises
     ------
     ValueError
@@ -53,7 +56,7 @@ class Updater(metaclass=abc.ABCMeta):
 
     """
     def __init__(self, token, author_name=None, author_email=None,
-                 dry_run=False, verbose=False):
+                 dry_run=False, verbose=False, draft=False):
         if author_name is not None and author_email is None:
             raise ValueError('author_email must be provided with author_name')
 
@@ -66,6 +69,7 @@ class Updater(metaclass=abc.ABCMeta):
         self.fork = None
         self.dry_run = dry_run
         self.verbose = verbose
+        self.draft = draft
 
     def run(self, repositories, delay=2):
         """Open pull request, one for each of the given repositories.
@@ -286,7 +290,7 @@ class Updater(metaclass=abc.ABCMeta):
                                        body=self.pull_request_body,
                                        base=self.repo.default_branch,
                                        head=f'{self.fork.owner.login}:{self.branch_name}',
-                                       draft=True)
+                                       draft=self.draft)
         return result.html_url
 
     def run_command(self, command):
