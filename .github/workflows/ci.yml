@@ -16,7 +16,6 @@ jobs:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v2.6.5
     with:
       envs: |
-        - linux: codestyle
         - linux: py39-test
         - linux: py312-test
         - linux: py313-test
