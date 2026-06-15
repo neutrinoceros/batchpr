@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v2.6.5
+    with:
+      envs: |
+        - linux: py39-test
+        - linux: py312-test
+        - linux: py313-test
+        - macos: py311-test
+        - windows: py310-test
