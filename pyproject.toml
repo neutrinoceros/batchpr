@@ -1,0 +1,30 @@
+[project]
+name = "batchpr"
+description = "Easy automated pull requests to GitHub repositories"
+readme = "README.rst"
+authors = [
+    { name = "Thomas Robitaille", email = "thomas.robitaille@gmail.com" },
+]
+license = "BSD-2-Clause"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "requests",
+    "pygithub",
+    "termcolor",
+]
+dynamic = ["version"]
+
+[project.urls]
+Home = "https://github.com/astrofrog/batchpr"
+
+[build-system]
+requires = ["flit_core >=3.11,<5"]
+build-backend = "flit_core.buildapi"
