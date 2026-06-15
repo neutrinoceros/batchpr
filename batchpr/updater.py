@@ -232,18 +232,17 @@ class Updater(metaclass=abc.ABCMeta):
         self.run_command(f'git clone --depth 1 {self.fork.html_url}')
         os.chdir(self.repo.name)
 
-        try:
-            self.run_command("git remote set-branches origin '*'")
-            self.run_command(f'git fetch origin {self.branch_name}')
-        except Exception:  # noqa
-            pass
-
         # Update to the latest upstream's default branch (usually "main")
         self.run_command(f'git remote add upstream {self.repo.html_url}')
         self.run_command(f'git fetch upstream {self.repo.default_branch}')
-        try:
+
+        # If the branch already exists on the fork, check it out so that an
+        # existing pull request can be updated, otherwise create it fresh from
+        # the upstream default branch.
+        if self.run_command(f'git ls-remote --heads {self.fork.html_url} {self.branch_name}'):
+            self.run_command(f'git fetch origin {self.branch_name}')
             self.run_command(f'git checkout -b {self.branch_name} origin/{self.branch_name}')
-        except Exception:  # noqa
+        else:
             self.run_command(f'git checkout -b {self.branch_name} upstream/{self.repo.default_branch}')
 
         # Initialize submodules (this is a no-op if there is no submodule)
